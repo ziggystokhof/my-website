@@ -1,211 +1,648 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="day-mode"> <!-- Set day mode by default -->
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ziggy's Portfolio</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            overflow-x: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMAGIN.Studio - Work (Desktop)</title>
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #313131;
+      color: #f4f4f4;
+      height: 100vh;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 12px;
+      background-color: #444;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #ffcc33;
+      border-radius: 6px;
+      border: 2px solid #444;
+    }
 
-        /* Navigation Bar */
-        .nav {
-            display: flex;
-            justify-content: center;
-            background-color: #333;
-            padding: 10px 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
+    /* Infinite Grid Container */
+    /* 5000×5000px container centered via translate(-2500px, -2500px) */
+    #pan-container {
+      position: absolute;
+      width: 5000px;
+      height: 5000px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-2500px, -2500px) scale(1);
+      background-image: 
+        linear-gradient(0deg, rgba(255,255,255,0.171) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.171) 1px, transparent 1px);
+      background-size: 30px 30px;
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+    #pan-container:active {
+      cursor: grabbing;
+    }
 
-        .nav a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            transition: background-color 0.3s;
-        }
+    /* Navigation Bar (fixed at top center) */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #444;
+      height: 62px;
+      z-index: 3000;
+      gap: 10px;
+      border-bottom: 1.5px solid #ffcc33;
+      border-radius: 0 0 15px 15px;
+      padding: 0 10px;
+      box-sizing: border-box;
+      cursor: move;
+      user-select: none;
+    }
+    /* Standard app-box styling (used in both nav and desktop) */
+    .app-box {
+      position: relative;
+      padding: 0 10px;
+      height: 43px;
+      background-color: #444;
+      color: #ffcc33;
+      border: 1px solid #555;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .app-box:hover {
+      border-color: #ffcc33;
+      transform: translateY(-2px);
+    }
+    .sub-app-box-container {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 36px;
+      left: 0;
+      background-color: #333;
+      border: 1px solid #555;
+      border-radius: 5px;
+      z-index: 3000;
+    }
+    .sub-app-box {
+      color: #ccc;
+      font-size: 0.7rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+    .sub-app-box:hover {
+      background-color: #444;
+      color: #ffcc33;
+    }
+    .app-box.expanded .sub-app-box-container {
+      display: flex;
+    }
+    .app-box.minimized {
+      background-color: rgba(255,165,0,0.7);
+    }
+    /* Make nav bar icons smaller */
+    .nav .desktop-app {
+      width: 30px;
+      height: 30px;
+    }
 
-        .nav a:hover {
-            background-color: #575757;
-            border-radius: 5px;
-        }
+    /* Desktop Layout – Using a Relative Container */
+    .desktop {
+      position: absolute;
+      top: 2500px;
+      left: 2500px;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+    }
+    .desktop-app-container {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: #444;
+      border: 1px solid #444;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      border-bottom: 1.5px solid #ffcc33;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      cursor: move;
+      transition: all 0.2s;
+    }
+    .desktop-app-container:hover {
+      background-color: #555;
+      border-color: #ffcc33;
+      transform: translateY(-2px);
+    }
+    .desktop-app {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .desktop-app img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .app-text {
+      color: #ffcc33;
+      margin-top: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 80%;
+      font-size: 0.7rem;
+    }
 
-        /* Dropdown Menu */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
+    /* Zoom Animation (for double-click opening) */
+    .icon-clone {
+      position: fixed;
+      z-index: 9999;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      overflow: hidden;
+      animation-fill-mode: forwards;
+    }
+    @keyframes zoomOpen {
+      0% { }
+      50% {
+        top: 100px;
+        left: 80px;
+        width: 60vw;
+        height: 55vh;
+        border-radius: 15px;
+      }
+      100% {
+        top: 72px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 72px);
+        border-radius: 30px;
+        background-color: #2d2d2d;
+        border: 3px solid #333;
+      }
+    }
 
-        .dropbtn {
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            font-size: 18px;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-        }
+    /* Zoom Controls */
+    .zoom-controls {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 4000;
+      display: flex;
+      gap: 10px;
+    }
+    .zoom-button {
+      background-color: #444;
+      border: 1px solid #555;
+      color: #ffcc33;
+      font-size: 1.5rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s;
+    }
+    .zoom-button:hover {
+      background-color: #555;
+      border-color: #ffcc33;
+    }
+    @media (max-width: 600px) {
+      .zoom-button {
+        width: 35px;
+        height: 35px;
+        font-size: 1.2rem;
+      }
+    }
 
-        .dropbtn:hover {
-            background-color: #575757;
-            border-radius: 5px;
-        }
+    /* (ADDED) Day/Night/Custom Mode Overrides */
+    /* Day mode is default. */
+    body.day-mode {
+      background-color: #fdfdfd;
+      color: #202020;
+    }
+    body.day-mode #pan-container {
+      background-image:
+        linear-gradient(0deg, rgba(0,0,0,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.2) 1px, transparent 1px);
+    }
+    body.day-mode .nav {
+      background-color: #e0e0e0;
+      border-bottom: 1.5px solid #909090;
+    }
+    body.day-mode .app-box {
+      background-color: #e0e0e0;
+      color: #333;
+      border: 1px solid #b0b0b0;
+    }
+    body.day-mode .app-box:hover {
+      border-color: #696969;
+    }
+    body.day-mode .desktop-app-container {
+      background-color: #e0e0e0;
+      border: 1px solid #cccccc;
+      border-bottom: 1.5px solid #696969;
+    }
+    body.day-mode .desktop-app-container:hover {
+      background-color: #cccccc;
+      border-color: #696969;
+    }
+    body.day-mode .app-text {
+      color: #333;
+    }
+    body.day-mode .zoom-button {
+      background-color: #e0e0e0;
+      border: 1px solid #999999;
+      color: #333;
+    }
+    body.day-mode .zoom-button:hover {
+      background-color: #cccccc;
+      border-color: #666666;
+    }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #444;
-            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-        }
+    /* Rename old default (#313131) to "custom-mode" */
+    body.custom-mode {
+      background-color: #313131;
+      color: #f4f4f4;
+    }
+    body.custom-mode #pan-container {
+      background-image:
+        linear-gradient(0deg, rgba(255,255,255,0.171) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.171) 1px, transparent 1px);
+    }
+    body.custom-mode .nav {
+      background-color: #444;
+      border-bottom: 1.5px solid #ffcc33;
+    }
+    body.custom-mode .app-box {
+      background-color: #444;
+      color: #ffcc33;
+      border: 1px solid #555;
+    }
+    body.custom-mode .app-box:hover {
+      border-color: #ffcc33;
+    }
+    body.custom-mode .desktop-app-container {
+      background-color: #444;
+      border: 1px solid #444;
+      border-bottom: 1.5px solid #ffcc33;
+    }
+    body.custom-mode .desktop-app-container:hover {
+      background-color: #555;
+      border-color: #ffcc33;
+    }
+    body.custom-mode .app-text {
+      color: #ffcc33;
+    }
+    body.custom-mode .zoom-button {
+      background-color: #444;
+      border: 1px solid #555;
+      color: #ffcc33;
+    }
+    body.custom-mode .zoom-button:hover {
+      background-color: #555;
+      border-color: #ffcc33;
+    }
 
-        .dropdown-content a {
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown-content a:hover {
-            background-color: #575757;
-        }
-
-        .dropdown:hover .dropdown-content {
-            display: block;
-        }
-
-        /* Header Section */
-        .header {
-            position: relative;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            align-items: flex-end; /* Align content to bottom */
-            justify-content: center;
-            background-size: cover;
-            background-position: center;
-            transition: background-image 1s ease-in-out;
-        }
-
-        .header-content {
-            position: absolute;
-            bottom: 0;
-            width: 100%; /* Stretch across full width */
-            color: white;
-            text-align: center;
-            z-index: 1;
-            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
-            padding: 20px;
-        }
-
-        /* Thumbnail Scroller */
-        .thumbnails {
-            display: flex;
-            overflow-x: auto;
-            padding: 20px;
-            gap: 20px;
-            background-color: #333; /* Match navigation bar color */
-            scroll-behavior: smooth;
-        }
-
-        .thumbnail {
-            flex: 0 0 auto;
-            width: 300px;
-            height: 188px;
-            background-size: cover;
-            background-position: center;
-            border: 2px solid #ddd;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .thumbnail:hover {
-            transform: scale(1.05);
-        }
-
-        .thumbnail a {
-            display: block;
-            width: 100%;
-            height: 100%;
-            text-decoration: none;
-        }
-    </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const thumbnails = [
-                { url: 'images/bg9.png', link: 'page1.html' },
-                { url: 'images/bg23.png', link: 'page2.html' },
-                { url: 'images/bg37.png', link: 'page3.html' },
-                { url: 'images/bg51.png', link: 'page4.html' }
-            ];
-
-            let currentIndex = 0;
-            const header = document.querySelector('.header');
-            const thumbnailElements = document.querySelectorAll('.thumbnail');
-
-            function updateHeader() {
-                const currentThumbnail = thumbnails[currentIndex];
-                header.style.backgroundImage = `url('${currentThumbnail.url}')`;
-            }
-
-            // Set up click event for thumbnails
-            thumbnailElements.forEach((thumbnail, index) => {
-                thumbnail.addEventListener('click', () => {
-                    currentIndex = index;
-                    updateHeader();
-                });
-            });
-
-            updateHeader(); // Initial header image
-        });
-    </script>
+    /* New "night-mode" with dark marine blue + light text/accents */
+    body.night-mode {
+      background-color: #1a2c3b; /* dark marine blue */
+      color: #f0f0f0;           /* light grey/white-ish text */
+    }
+    body.night-mode #pan-container {
+      background-image:
+        linear-gradient(0deg, rgba(245,245,245,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,245,245,0.2) 1px, transparent 1px);
+    }
+    body.night-mode .nav {
+      background-color: #22394b;
+      border-bottom: 1.5px solid #cfcfcf;
+    }
+    body.night-mode .app-box {
+      background-color: #22394b;
+      color: #f0f0f0;
+      border: 1px solid #2f4d63;
+    }
+    body.night-mode .app-box:hover {
+      border-color: #cfcfcf;
+    }
+    body.night-mode .desktop-app-container {
+      background-color: #22394b;
+      border: 1px solid #2f4d63;
+      border-bottom: 1.5px solid #cfcfcf;
+    }
+    body.night-mode .desktop-app-container:hover {
+      background-color: #2f4d63;
+      border-color: #cfcfcf;
+    }
+    body.night-mode .app-text {
+      color: #f0f0f0;
+    }
+    body.night-mode .zoom-button {
+      background-color: #22394b;
+      border: 1px solid #2f4d63;
+      color: #f0f0f0;
+    }
+    body.night-mode .zoom-button:hover {
+      background-color: #2f4d63;
+      border-color: #cfcfcf;
+    }
+  </style>
 </head>
-<body>
-
-    <!-- Navigation Bar -->
-    <div class="nav">
-        <a href="index.html">home</a>
-        <a href="about.html">about</a>
-        <div class="dropdown">
-            <button class="dropbtn">work</button>
-            <div class="dropdown-content">
-                <a href="page1.html">autumn</a>
-                <a href="page2.html">iceland</a>
-                <a href="page3.html">suburb</a>
-                <a href="page4.html">beach</a>
-                <a href="page5.html">desert</a>
-            </div>
-        </div>
+<body class="day-mode"> <!-- Make day mode default -->
+  <!-- Navigation Bar (fixed at top center) -->
+  <div class="nav" data-target="" data-img="">
+    <!-- IMAGIN.Studio - Work with Dropdown -->
+    <div class="app-box nav-desktop-app has-sub-apps" data-target="imagin_app.html" data-img="images/imaginstudio_app.png">
+      <div class="desktop-app">
+        <img src="images/imaginstudio_app.png" alt="IMAGIN Studio App">
+      </div>
+      <div class="app-text">IMAGIN.Studio - Work</div>
+      <div class="sub-app-box-container">
+        <div class="sub-app-box" data-scene="autumn">IMAGIN.Studio - Autumn Scene</div>
+        <div class="sub-app-box" data-scene="iceland">IMAGIN.Studio - Iceland Scene</div>
+        <div class="sub-app-box" data-scene="suburb">IMAGIN.Studio - Suburb Scene</div>
+        <div class="sub-app-box" data-scene="beach">IMAGIN.Studio - Beach Scene</div>
+      </div>
     </div>
 
-    <!-- Header Section -->
-    <div class="header">
-        <div class="header-content">
-            <h1>Welcome to My Portfolio</h1>
-            <p>Explore my work and skills</p>
-        </div>
+    <!-- Medal.TV - Work with Dropdown -->
+    <div class="app-box nav-desktop-app has-sub-apps" data-target="medaltv_app.html" data-img="images/medaltv_app.png">
+      <div class="desktop-app">
+        <img src="images/medaltv_app.png" alt="Medal.TV App">
+      </div>
+      <div class="app-text">Medal.TV - Work</div>
+      <div class="sub-app-box-container">
+        <div class="sub-app-box" data-scene="wrecked-art">Get Wrecked - Art</div>
+        <div class="sub-app-box" data-scene="wrecked-qa">Get Wrecked - QA &amp; Community</div>
+      </div>
     </div>
 
-    <!-- Thumbnail Section -->
-    <div class="thumbnails">
-        <div class="thumbnail" style="background-image: url('images/bg9.png');">
-            <a href="page1.html"></a>
-        </div>
-        <div class="thumbnail" style="background-image: url('images/bg23.png');">
-            <a href="page2.html"></a>
-        </div>
-        <div class="thumbnail" style="background-image: url('images/bg37.png');">
-            <a href="page3.html"></a>
-        </div>
-        <div class="thumbnail" style="background-image: url('images/bg51.png');">
-            <a href="page4.html"></a>
-        </div>
+    <!-- Resume (No dropdown) -->
+    <div class="app-box nav-desktop-app" data-target="timeline.html" data-img="images/resume_app.png">
+      <div class="desktop-app">
+        <img src="images/resume_app.png" alt="Resume App">
+      </div>
+      <div class="app-text">Resume</div>
     </div>
+  </div>
 
+  <!-- Pan Container (Infinite grid) -->
+  <div id="pan-container">
+    <!-- Desktop Area with App Icons (using a relative container) -->
+    <div class="desktop">
+      <!-- Leftmost Box -->
+      <div class="desktop-app-container" style="left: -170px; top: 0;" data-target="imagin_app.html" data-img="images/imaginstudio_app.png">
+        <div class="desktop-app">
+          <img src="images/imaginstudio_app.png" alt="IMAGIN Studio App">
+        </div>
+        <div class="app-text">IMAGIN.Studio - Work</div>
+      </div>
+
+      <!-- Middle Box -->
+      <div class="desktop-app-container" style="left: -50px; top: 0;" data-target="medaltv_app.html" data-img="images/medaltv_app.png">
+        <div class="desktop-app">
+          <img src="images/medaltv_app.png" alt="Medal.TV App">
+        </div>
+        <div class="app-text">Medal.TV - Work Is Very Long Here</div>
+      </div>
+
+      <!-- Rightmost Box -->
+      <div class="desktop-app-container" style="left: 70px; top: 0;" data-target="timeline.html" data-img="images/resume_app.png">
+        <div class="desktop-app">
+          <img src="images/resume_app.png" alt="Resume App">
+        </div>
+        <div class="app-text">Resume</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Zoom Controls at Bottom Left -->
+  <div class="zoom-controls">
+    <div class="zoom-button" id="zoom-out">–</div>
+    <div class="zoom-button" id="zoom-in">+</div>
+  </div>
+
+  <!-- (ADDED) Day/Night/Custom Mode Toggle Button -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let isPanning = false;
+      let panStartX = 0;
+      let panStartY = 0;
+      let currentPanX = -2500;
+      let currentPanY = -2500;
+      let currentScale = 1;
+      const panContainer = document.getElementById('pan-container');
+      
+      /* For triple mode: day-mode, custom-mode, night-mode */
+      const modes = ["day-mode", "custom-mode", "night-mode"];
+      let modeIndex = 0; /* 0 => day-mode, 1 => custom-mode, 2 => night-mode */
+
+      function updateTransform() {
+        panContainer.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
+      }
+      updateTransform();
+
+      function startPan(e) {
+        if (e.target === panContainer) {
+          isPanning = true;
+          panStartX = e.clientX - currentPanX;
+          panStartY = e.clientY - currentPanY;
+          panContainer.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      }
+      function handlePan(e) {
+        if (isPanning) {
+          currentPanX = e.clientX - panStartX;
+          currentPanY = e.clientY - panStartY;
+          updateTransform();
+        }
+      }
+      function stopPan() {
+        if (isPanning) {
+          isPanning = false;
+          panContainer.style.cursor = 'grab';
+        }
+      }
+      panContainer.addEventListener('mousedown', startPan);
+      document.addEventListener('mousemove', handlePan);
+      document.addEventListener('mouseup', stopPan);
+
+      // Navigation App-Box Hover/Dropdown
+      const navAppBoxes = document.querySelectorAll(".nav .app-box.has-sub-apps");
+      navAppBoxes.forEach((box) => {
+        box.addEventListener("mouseenter", () => {
+          navAppBoxes.forEach(otherBox => {
+            if (otherBox !== box) otherBox.classList.remove("expanded");
+          });
+          box.classList.add("expanded");
+        });
+        box.addEventListener("mouseleave", () => box.classList.remove("expanded"));
+      });
+
+      // Double-click apps to open
+      document.querySelectorAll('[data-target]').forEach(el => {
+        el.addEventListener('dblclick', function(e) {
+          e.stopPropagation();
+          const targetURL = el.getAttribute('data-target');
+          const iconSrc = el.getAttribute('data-img');
+          if (iconSrc) zoomOpenStages(e, targetURL, iconSrc);
+          else if (targetURL) window.location.href = targetURL;
+        });
+      });
+
+      // Draggable elements
+      const draggableSelectors = [".nav", ".nav-desktop-app", ".desktop-app-container", ".timeline-card"];
+      draggableSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          enableDrag(el);
+        });
+      });
+
+      // Zoom in/out
+      document.getElementById('zoom-in').addEventListener('click', () => {
+        currentScale = Math.min(currentScale + 0.1, 2);
+        updateTransform();
+      });
+      document.getElementById('zoom-out').addEventListener('click', () => {
+        currentScale = Math.max(currentScale - 0.1, 0.5);
+        updateTransform();
+      });
+
+      // Create triple-mode toggle button
+      const dayNightButton = document.createElement('div');
+      dayNightButton.id = 'toggle-day-night';
+      /* By default, the body is day-mode (modeIndex=0). We'll label button to the next mode. */
+      dayNightButton.textContent = 'Custom Mode';
+      dayNightButton.style.position = 'fixed';
+      dayNightButton.style.bottom = '20px';
+      dayNightButton.style.right = '20px';
+      dayNightButton.style.backgroundColor = '#333';
+      dayNightButton.style.color = '#fff';
+      dayNightButton.style.border = '1px solid #666';
+      dayNightButton.style.padding = '0 10px';
+      dayNightButton.style.height = '43px';
+      dayNightButton.style.display = 'flex';
+      dayNightButton.style.alignItems = 'center';
+      dayNightButton.style.justifyContent = 'center';
+      dayNightButton.style.cursor = 'pointer';
+      dayNightButton.style.zIndex = '9999';
+      document.body.appendChild(dayNightButton);
+
+      dayNightButton.addEventListener('click', () => {
+        // Cycle among the 3 modes
+        /* remove old mode class from body */
+        document.body.classList.remove(modes[modeIndex]);
+
+        /* increment index */
+        modeIndex = (modeIndex + 1) % modes.length;
+
+        /* add new mode class */
+        document.body.classList.add(modes[modeIndex]);
+
+        /* update button label for next mode in sequence */
+        const nextIndex = (modeIndex + 1) % modes.length;
+        if (modes[nextIndex] === "day-mode") {
+          dayNightButton.textContent = "Day Mode";
+        } else if (modes[nextIndex] === "custom-mode") {
+          dayNightButton.textContent = "Custom Mode";
+        } else {
+          dayNightButton.textContent = "Night Mode";
+        }
+      });
+    });
+
+    function zoomOpenStages(event, targetURL, iconSrc) {
+      event.stopPropagation();
+      const icon = event.currentTarget;
+      const rect = icon.getBoundingClientRect();
+      const clone = document.createElement('div');
+      clone.classList.add('icon-clone');
+      clone.style.top = rect.top + 'px';
+      clone.style.left = rect.left + 'px';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      clone.style.backgroundImage = `url(${iconSrc})`;
+      clone.style.backgroundSize = 'contain';
+      clone.style.backgroundPosition = 'center';
+      clone.style.backgroundRepeat = 'no-repeat';
+      clone.style.backgroundColor = window.getComputedStyle(icon).backgroundColor;
+      document.body.appendChild(clone);
+      clone.style.animation = 'zoomOpen 0.35s linear forwards';
+      clone.addEventListener('animationend', () => {
+        window.location.href = targetURL;
+      }, { once: true });
+    }
+
+    function enableDrag(el) {
+      let pos = { startX: 0, startY: 0, initialLeft: 0, initialTop: 0 };
+      let isDragging = false;
+      el.addEventListener('mousedown', dragStart);
+
+      function dragStart(e) {
+        if (e.button !== 0) return;
+        pos.startX = e.clientX;
+        pos.startY = e.clientY;
+        pos.initialLeft = parseInt(window.getComputedStyle(el).left, 10) || 0;
+        pos.initialTop = parseInt(window.getComputedStyle(el).top, 10) || 0;
+        isDragging = false;
+        document.addEventListener('mousemove', dragging);
+        document.addEventListener('mouseup', dragEnd);
+      }
+
+      function dragging(e) {
+        const dx = e.clientX - pos.startX;
+        const dy = e.clientY - pos.startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          isDragging = true;
+        }
+        el.style.left = (pos.initialLeft + dx) + 'px';
+        el.style.top = (pos.initialTop + dy) + 'px';
+      }
+
+      function dragEnd(e) {
+        document.removeEventListener('mousemove', dragging);
+        document.removeEventListener('mouseup', dragEnd);
+        if (isDragging) {
+          const gridSize = 30;
+          const width = el.offsetWidth;
+          const height = el.offsetHeight;
+          const currentLeft = parseInt(el.style.left, 10);
+          const currentTop = parseInt(el.style.top, 10);
+          const centerX = currentLeft + width / 2;
+          const centerY = currentTop + height / 2;
+          const snappedCenterX = Math.round(centerX / gridSize) * gridSize;
+          const snappedCenterY = Math.round(centerY / gridSize) * gridSize;
+          const newLeft = snappedCenterX - width / 2;
+          const newTop = snappedCenterY - height / 2;
+          el.style.left = newLeft + 'px';
+          el.style.top = newTop + 'px';
+        }
+      }
+    }
+  </script>
 </body>
 </html>
