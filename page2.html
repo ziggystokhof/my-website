@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMAGIN.Studio - Iceland Scene</title>
+  <style>
+    /* --------------------------------------------------- */
+    /* 1. Body & Global Scrollbar Styles                   */
+    /* --------------------------------------------------- */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #313131;
+      background-image: radial-gradient(rgba(255,255,255,0.171) 2px, transparent 0);
+      background-size: 30px 30px;
+      background-position: -5px -5px;
+      color: #f4f4f4;
+      height: 100vh;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 12px;
+      background-color: #444;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #ffcc33;
+      border-radius: 6px;
+      border: 2px solid #444;
+    }
+
+    /* --------------------------------------------------- */
+    /* 2. Navigation Bar Styles                           */
+    /* --------------------------------------------------- */
+    .nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #444;
+      height: 62px;
+      position: fixed;
+      top: 8px;
+      left: 39.25%;
+      z-index: 3000;
+      gap: 10px;
+      border-bottom: 1.5px solid #ffcc33;
+      border-radius: 15px;
+      padding: 0 10px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    /* Base app-box styles (for dropdowns and JS) */
+    .app-box {
+      position: relative;
+      padding: 0 10px;
+      height: 43px;
+      background-color: #444;
+      color: #ffcc33;
+      border: 1px solid #555;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .app-box:hover {
+      border-color: #ffcc33;
+    }
+    .app-box.minimized {
+      background-color: rgba(255,165,0,0.7);
+    }
+    .sub-app-box-container {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 36px;
+      left: 0;
+      background-color: #333;
+      border: 1px solid #555;
+      border-radius: 5px;
+      z-index: 3000;
+    }
+    .sub-app-box {
+      color: #ccc;
+      font-size: 0.7rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+    .sub-app-box:hover {
+      background-color: #444;
+      color: #ffcc33;
+    }
+    .app-box.expanded .sub-app-box-container {
+      display: flex;
+    }
+
+    /* --------------------------------------------------- */
+    /* 3. Timeline & Other Page Styles                    */
+    /* --------------------------------------------------- */
+    .timeline-container {
+      position: relative;
+      max-width: calc(1200px + 20px);
+      margin: 180px auto 0;
+      padding: 0 0 40px 20px;
+      overflow-y: auto;
+      height: calc(140vh - 120px);
+      z-index: 2;
+    }
+    .timeline {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .timeline-card {
+      position: relative;
+      width: 94%;
+      margin: 30px auto;
+      background: #444;
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 0;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.5s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      border-left: 3px solid #ffcc33;
+      overflow: hidden;
+      height: 600px;
+    }
+    .timeline-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .rendered-image-container {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      cursor: pointer;
+    }
+    .rendered-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .rendered-image:hover {
+      transform: scale(1.03);
+    }
+    .window-controls {
+      position: fixed;
+      top: 80px;
+      right: 250px;
+      display: flex;
+      gap: 8px;
+      z-index: 4000;
+    }
+    .control-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 30%;
+      border: 2px solid #ffcc33;
+      background: transparent;
+      color: #ffcc33;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .control-btn:hover {
+      background: #ffcc33;
+      color: #313131;
+    }
+
+    /* --------------------------------------------------- */
+    /* 4. New Styles for Navigation Desktop-App Boxes      */
+    /* --------------------------------------------------- */
+    /* These rules override the default desktop app styles when inside the nav */
+    .nav .nav-desktop-app {
+      position: relative; /* override any absolute positioning */
+      height: 43px;       /* match the nav bar height */
+      background-color: #444;
+      border: 1px solid #555;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: row; /* icon and text side-by-side */
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      padding: 0 10px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .nav .nav-desktop-app:hover {
+      border-color: #ffcc33;
+    }
+    .nav .nav-desktop-app .desktop-app {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+    }
+    /* NEW: Force the image inside the desktop-app to scale to its container */
+    .nav .nav-desktop-app .desktop-app img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .nav .nav-desktop-app .app-text {
+      margin: 0;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --------------------------------------------------- */
+    /* 5. Animation for the 2-Stage "Zoom Open"           */
+    /* --------------------------------------------------- */
+    .icon-clone {
+      position: fixed;
+      z-index: 9999;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      overflow: hidden;
+      animation-fill-mode: forwards;
+    }
+    @keyframes zoomOpen {
+      0% {
+        /* initial values set in JS */
+      }
+      50% {
+        top: 100px;
+        left: 80px;
+        width: 60vw;
+        height: 55vh;
+        border-radius: 15px;
+      }
+      100% {
+        top: 72px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 72px);
+        border-radius: 30px;
+        background-color: #2d2d2d;
+        border: 3px solid #333;
+      }
+    }
+  </style>
+
+  <script>
+    // Navigation dropdown handling.
+    document.addEventListener("DOMContentLoaded", () => {
+      const navAppBoxes = document.querySelectorAll(".nav .app-box.has-sub-apps");
+      navAppBoxes.forEach((box) => {
+        const subMenu = box.querySelector('.sub-app-box-container');
+        box.addEventListener("mouseenter", () => {
+          navAppBoxes.forEach((otherBox) => {
+            if (otherBox !== box) otherBox.classList.remove("expanded");
+          });
+          box.classList.add("expanded");
+        });
+        box.addEventListener("mouseleave", (e) => {
+          if (!box.contains(e.relatedTarget)) {
+            box.classList.remove("expanded");
+          }
+        });
+        subMenu.addEventListener("mouseleave", (e) => {
+          if (!subMenu.contains(e.relatedTarget)) {
+            box.classList.remove("expanded");
+          }
+        });
+      });
+    });
+
+    /* 2-Stage Zoom Animation Function */
+    function zoomOpenStages(event, targetURL, iconSrc) {
+      event.stopPropagation();
+      const icon = event.currentTarget;
+      const rect = icon.getBoundingClientRect();
+      const clone = document.createElement('div');
+      clone.classList.add('icon-clone');
+      clone.style.top = rect.top + 'px';
+      clone.style.left = rect.left + 'px';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      clone.style.backgroundImage = `url(${iconSrc})`;
+      clone.style.backgroundSize = 'contain';
+      clone.style.backgroundPosition = 'center';
+      clone.style.backgroundRepeat = 'no-repeat';
+      clone.style.backgroundColor = window.getComputedStyle(icon).backgroundColor;
+      document.body.appendChild(clone);
+      clone.style.animation = 'zoomOpen 0.35s linear forwards';
+      clone.addEventListener('animationend', () => {
+        window.location.href = targetURL;
+      }, { once: true });
+    }
+  </script>
+</head>
+<body>
+  <!-- Navigation Bar with Desktop-Style App Boxes -->
+  <div class="nav">
+    <!-- IMAGIN.Studio - Work with Dropdown -->
+    <div class="app-box nav-desktop-app has-sub-apps" onclick="location.href='imagin_app.html'">
+      <div class="desktop-app">
+        <img src="images/imaginstudio_app.png" alt="IMAGIN Studio App">
+      </div>
+      <div class="app-text">IMAGIN.Studio - Work</div>
+      <div class="sub-app-box-container">
+        <div class="sub-app-box" data-scene="autumn">IMAGIN.Studio - Autumn Scene</div>
+        <div class="sub-app-box" data-scene="iceland">IMAGIN.Studio - Iceland Scene</div>
+        <div class="sub-app-box" data-scene="suburb">IMAGIN.Studio - Suburb Scene</div>
+        <div class="sub-app-box" data-scene="beach">IMAGIN.Studio - Beach Scene</div>
+      </div>
+    </div>
+
+    <!-- Medal.TV - Work with Dropdown (uses zoom animation on click) -->
+    <div class="app-box nav-desktop-app has-sub-apps" onclick="zoomOpenStages(event, 'medaltv_app.html', 'images/medaltv_app.png')">
+      <div class="desktop-app">
+        <img src="images/medaltv_app.png" alt="Medal.TV App">
+      </div>
+      <div class="app-text">Medal.TV - Work</div>
+      <div class="sub-app-box-container">
+        <div class="sub-app-box" data-scene="wrecked-art">Get Wrecked - Art</div>
+        <div class="sub-app-box" data-scene="wrecked-qa">Get Wrecked - Quality Assurance &amp; Community Building</div>
+      </div>
+    </div>
+
+    <!-- Resume (no dropdown; uses zoom animation on click) -->
+    <div class="app-box nav-desktop-app" onclick="zoomOpenStages(event, 'timeline.html', 'images/resume_app.png')">
+      <div class="desktop-app">
+        <img src="images/resume_app.png" alt="Resume App">
+      </div>
+      <div class="app-text">Resume</div>
+    </div>
+  </div>
+
+  <!-- Window Controls -->
+  <div class="window-controls">
+    <div class="control-btn" onclick="/* Add minimizeTimeline logic if needed */">−</div>
+    <div class="control-btn" onclick="window.location.href='index.html'">×</div>
+  </div>
+
+
+  <!-- Timeline Container with Scroller -->
+  <div class="timeline-container">
+    <div class="timeline">
+      <!-- Render 1 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg15.png')">
+          <img src="images/bg15.png" alt="Render 1" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 2 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg16.png')">
+          <img src="images/bg16.png" alt="Render 2" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 3 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg17.png')">
+          <img src="images/bg17.png" alt="Render 3" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 4 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg18.png')">
+          <img src="images/bg18.png" alt="Render 4" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 5 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg19.png')">
+          <img src="images/bg19.png" alt="Render 5" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 6 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg20.png')">
+          <img src="images/bg20.png" alt="Render 6" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 7 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg21.png')">
+          <img src="images/bg21.png" alt="Render 7" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 8 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg22.png')">
+          <img src="images/bg22.png" alt="Render 8" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 9 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg23.png')">
+          <img src="images/bg23.png" alt="Render 9" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 10 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg24.png')">
+          <img src="images/bg24.png" alt="Render 10" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 11 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg25.png')">
+          <img src="images/bg25.png" alt="Render 11" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 12 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg26.png')">
+          <img src="images/bg26.png" alt="Render 12" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 13 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg27.png')">
+          <img src="images/bg27.png" alt="Render 13" class="rendered-image">
+        </div>
+      </div>
+      <!-- Render 14 -->
+      <div class="timeline-card">
+        <div class="rendered-image-container" onclick="zoomImage('images/bg28.png')">
+          <img src="images/bg28.png" alt="Render 14" class="rendered-image">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Timeline animation observer
+    const timelineCards = document.querySelectorAll('.timeline-card');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    timelineCards.forEach(card => observer.observe(card));
+
+    // Image zoom function
+    function zoomImage(src) {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = 0;
+      overlay.style.left = 0;
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
+      overlay.style.zIndex = '5000';
+      overlay.style.cursor = 'zoom-out';
+      overlay.onclick = () => document.body.removeChild(overlay);
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.objectFit = 'contain';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.padding = '20px';
+
+      overlay.appendChild(img);
+      document.body.appendChild(overlay);
+    }
+  </script>
+</body>
+</html>
