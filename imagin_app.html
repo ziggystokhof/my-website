@@ -1,208 +1,868 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desktop Environment</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #282c34;
-            color: #f4f4f4;
-            height: 100vh;
-            overflow: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMAGIN.Studio - Work (Dynamic Headers Timeline)</title>
+  <style>
+    /* --------------------------------------------------- */
+    /* 1. Global & Body Styles (based on timeline.html)    */
+    /* --------------------------------------------------- */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #313131;
+      color: #f4f4f4;
+      height: 100vh;
+      overflow: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 12px;
+      background-color: #444;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #ffcc33;
+      border-radius: 6px;
+      border: 2px solid #444;
+    }
+    /* --------------------------------------------------- */
+    /* 2. Navigation Bar (modified with code from desktop.html) */
+    /* --------------------------------------------------- */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #444;
+      height: 62px;
+      z-index: 3000;
+      gap: 10px;
+      border-bottom: 1.5px solid #ffcc33;
+      border-radius: 0 0 15px 15px;
+      padding: 0 10px;
+      box-sizing: border-box;
+      cursor: move;
+      user-select: none;
+    }
+    .app-box {
+      position: relative;
+      padding: 0 10px;
+      height: 43px;
+      background-color: #444;
+      color: #ffcc33;
+      border: 1px solid #555;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .app-box:hover {
+      border-color: #ffcc33;
+      transform: translateY(-2px);
+    }
+    .sub-app-box-container {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 36px;
+      left: 0;
+      background-color: #333;
+      border: 1px solid #555;
+      border-radius: 5px;
+      z-index: 3000;
+    }
+    .sub-app-box {
+      color: #ccc;
+      font-size: 0.7rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.2s;
+    }
+    .sub-app-box:hover {
+      background-color: #444;
+      color: #ffcc33;
+    }
+    .app-box.expanded .sub-app-box-container {
+      display: flex;
+    }
+    .app-box.minimized {
+      background-color: rgba(255,165,0,0.7);
+    }
+    .nav .desktop-app {
+      width: 30px;
+      height: 30px;
+    }
+    
+    /* --------------------------------------------------- */
+    /* 3. Pan Container & Desktop Area (from timeline.html) */
+    /* --------------------------------------------------- */
+    #pan-container {
+      position: absolute;
+      width: 5000px;
+      height: 5000px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-2500px, -2500px) scale(1);
+      background-image: 
+        linear-gradient(0deg, rgba(255,255,255,0.171) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.171) 1px, transparent 1px);
+      background-size: 30px 30px;
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+    #pan-container:active {
+      cursor: grabbing;
+    }
+    .desktop {
+      position: absolute;
+      top: 2500px;
+      left: 2500px;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+    }
+    .desktop-app-container {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-color: #444;
+      border: 1px solid #444;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      border-bottom: 1.5px solid #ffcc33;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      cursor: move;
+      transition: all 0.2s;
+    }
+    .desktop-app-container:hover {
+      background-color: #555;
+      border-color: #ffcc33;
+      transform: translateY(-2px);
+    }
+    .desktop-app {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .desktop-app img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .app-text {
+      color: #ffcc33;
+      margin-top: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 80%;
+      font-size: 0.7rem;
+    }
+    
+    /* --------------------------------------------------- */
+    /* 4. Timeline Container (Modified for Dynamic Headers) */
+    /* --------------------------------------------------- */
+    .timeline-container {
+      position: absolute;
+      left: 2500px;
+      top: 2200px;
+      transform: translate(-50%, 0);
+      width: 1200px;
+      height: 600px;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: rgba(51,51,51,0.8);
+      border: 1px solid #ff8200;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      z-index: 5;
+    }
+    .window-controls {
+      position: sticky;
+      top: 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 10px 0;
+      background-color: rgba(51,51,51,0.8);
+      border-bottom: 1px solid #ff8200;
+      z-index: 10;
+    }
+    .control-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 30%;
+      border: 2px solid #ff8200;
+      background: transparent;
+      color: #ff8200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+    .control-btn:hover {
+      background: #ff8200;
+      color: #313131;
+    }
+    .timeline {
+      margin: 0 auto;
+    }
+    /* --------------------------------------------------- */
+    /* 5. Dynamic Header Timeline Cards (from imagin_app.html) */
+    /* --------------------------------------------------- */
+    .timeline-card {
+      position: relative;
+      width: 94%;
+      margin: 30px auto;
+      background: #444;
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 0;
+      transition: all 0.5s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      border-left: 3px solid #ff8200;
+      overflow: hidden;
+      display: block;
+    }
+    .header-card {
+      height: 400px;
+    }
+    .header {
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 0.5s ease;
+      background-color: #555;
+    }
+    .progress-loader {
+      width: 100%;
+      height: 5px;
+      background: #aaa;
+      position: relative;
+    }
+    .progress-loader .progress {
+      height: 5px;
+      background: #ff8200;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .timeline-link {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      text-decoration: none;
+    }
+    
+    /* --------------------------------------------------- */
+    /* 6. Zoom Controls (from timeline.html)                */
+    /* --------------------------------------------------- */
+    .zoom-controls {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 4000;
+      display: flex;
+      gap: 10px;
+    }
+    .zoom-button {
+      background-color: #444;
+      border: 1px solid #555;
+      color: #ff8200;
+      font-size: 1.5rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s;
+    }
+    .zoom-button:hover {
+      background-color: #555;
+      border-color: #ff8200;
+    }
+    
+    /* --------------------------------------------------- */
+    /* 7. Icon Clone (for zoomOpen animation)              */
+    /* --------------------------------------------------- */
+    .icon-clone {
+      position: fixed;
+      z-index: 9999;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      overflow: hidden;
+      animation-fill-mode: forwards;
+    }
+    @keyframes zoomOpen {
+      0% { }
+      50% {
+        top: 100px;
+        left: 80px;
+        width: 60vw;
+        height: 55vh;
+        border-radius: 15px;
+      }
+      100% {
+        top: 72px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 72px);
+        border-radius: 30px;
+        background-color: #2d2d2d;
+        border: 3px solid #333;
+      }
+    }
 
+    /* (ADDED) 9. Day Mode Overrides */
+    body.day-mode {
+      background-color: #fdfdfd;
+      color: #202020;
+    }
+    body.day-mode #pan-container {
+      background-image:
+        linear-gradient(0deg, rgba(0,0,0,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.2) 1px, transparent 1px);
+    }
+    body.day-mode .nav {
+      background-color: #e0e0e0;
+      border-bottom: 1.5px solid #909090;
+    }
+    body.day-mode .app-box {
+      background-color: #e0e0e0;
+      color: #333333;
+      border: 1px solid #b0b0b0;
+    }
+    body.day-mode .app-box:hover {
+      border-color: #696969;
+    }
+    body.day-mode .desktop-app-container {
+      background-color: #e0e0e0;
+      border: 1px solid #cccccc;
+      border-bottom: 1.5px solid #696969;
+    }
+    body.day-mode .desktop-app-container:hover {
+      background-color: #cccccc;
+      border-color: #696969;
+    }
+    body.day-mode .app-text {
+      color: #333333;
+    }
+    body.day-mode .zoom-button {
+      background-color: #e0e0e0;
+      border: 1px solid #999999;
+      color: #333;
+    }
+    body.day-mode .zoom-button:hover {
+      background-color: #cccccc;
+      border-color: #666666;
+    }
+    /* (ADDED) Day Mode: Timeline Container & Window Controls */
+    body.day-mode .timeline-container {
+      background-color: #f0f0f0;
+      border: 1px solid #cccccc;
+    }
+    body.day-mode .window-controls {
+      background-color: #f0f0f0;
+      border-bottom: 1px solid #cccccc;
+    }
 
-        /* Navigation Bar */
-        .nav {
-            display: flex;
-            justify-content: center;
-            background-color: #444;
-            padding: 10px 0; /* Reduced padding for a smaller navigation bar */
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            gap: 20px;
-            border-bottom: 1.5px solid #ffcc33;
-        }
-
-        .app-box {
-            width: 80px; /* Scaled down size */
-            height: 80px; /* Scaled down size */
-            background-color: #444;
-            color: #ffcc33;
-            border: 2px solid #555;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-            font-size: 0.8rem; /* Adjusted font size for smaller app boxes */
-        }
-
-        .app-box:hover {
-            transform: scale(1.1);
-            border-color: #ffcc33;
-        }
-
-        /* Windowed Frame */
-        .window {
-            width: 100%;
-            height: calc(100vh - 50px); /* Adjusted to match new navigation bar height */
-            background-color: #333;
-            border: 2px solid #444;
-            display: flex;
-            flex-direction: column;
-            position: absolute;
-            top: 50px; /* Offset by navigation bar height */
-            left: 0;
-            overflow: hidden;
-        }
-
-        .window-header {
-            height: 40px;
-            background-color: #444;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            color: #f4f4f4;
-            border-bottom: 2px solid #555;
-            cursor: move; /* Indicate draggable area */
-        }
-
-        .window-header .buttons {
-            display: flex;
-            gap: 5px;
-        }
-
-        .window-header button {
-            width: 20px;
-            height: 20px;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .window-header .close {
-            background-color: #ff5c5c;
-        }
-
-        .window-header .close:hover {
-            background-color: #ff1c1c;
-        }
-
-        .window-header .minimize {
-            background-color: #ffcc33;
-        }
-
-        .window-header .minimize:hover {
-            background-color: #e6b800;
-        }
-
-        .window-header .maximize {
-            background-color: #5cb85c;
-        }
-
-        .window-header .maximize:hover {
-            background-color: #4cae4c;
-        }
-
-        /* Dynamic Header */
-        .header {
-            flex-grow: 1;
-            background-size: cover;
-            background-position: center;
-            transition: background-image 1s ease-in-out;
-        }
-    </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const header = document.querySelector(".header");
-            const thumbnails = [
-                'images/bg9.png',
-                'images/bg23.png',
-                'images/bg37.png',
-                'images/bg51.png'
-            ];
-            let currentIndex = 0;
-
-            function updateHeader() {
-                header.style.backgroundImage = `url('${thumbnails[currentIndex]}')`;
-                currentIndex = (currentIndex + 1) % thumbnails.length;
-            }
-
-            setInterval(updateHeader, 20000);
-            updateHeader();
-
-            // Button functionality
-            const closeButton = document.querySelector(".close");
-            const minimizeButton = document.querySelector(".minimize");
-            const maximizeButton = document.querySelector(".maximize");
-            const windowElement = document.querySelector(".window");
-
-            closeButton.addEventListener("click", function () {
-                window.location.href = "desktop.html"; // Redirect to desktop page
-            });
-
-            minimizeButton.addEventListener("click", function () {
-                windowElement.style.display = "none"; // Hide the window
-            });
-
-            maximizeButton.addEventListener("click", function () {
-                windowElement.style.width = "100%";
-                windowElement.style.height = "calc(100vh - 50px)";
-                windowElement.style.top = "50px";
-                windowElement.style.left = "0";
-                windowElement.style.transform = "none";
-            });
-
-            // Dragging functionality
-            const windowHeader = document.querySelector(".window-header");
-            let isDragging = false;
-            let offsetX, offsetY;
-
-            windowHeader.addEventListener("mousedown", function (e) {
-                isDragging = true;
-                offsetX = e.clientX - windowElement.getBoundingClientRect().left;
-                offsetY = e.clientY - windowElement.getBoundingClientRect().top;
-            });
-
-            document.addEventListener("mousemove", function (e) {
-                if (isDragging) {
-                    windowElement.style.left = `${e.clientX - offsetX}px`;
-                    windowElement.style.top = `${e.clientY - offsetY}px`;
-                }
-            });
-
-            document.addEventListener("mouseup", function () {
-                isDragging = false;
-            });
+    /* (ADDED) 10. Custom Mode Overrides */
+    body.custom-mode {
+      background-color: #313131;
+      color: #f4f4f4;
+    }
+    body.custom-mode #pan-container {
+      background-image:
+        linear-gradient(0deg, rgba(255,255,255,0.171) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.171) 1px, transparent 1px);
+    }
+    body.custom-mode .nav {
+      background-color: #444;
+      border-bottom: 1.5px solid #ff8200;
+    }
+    body.custom-mode .app-box {
+      background-color: #444;
+      color: #ff8200;
+      border: 1px solid #555;
+    }
+    body.custom-mode .app-box:hover {
+      border-color: #ff8200;
+    }
+    body.custom-mode .desktop-app-container {
+      background-color: #444;
+      border: 1px solid #444;
+      border-bottom: 1.5px solid #ff8200;
+    }
+    body.custom-mode .desktop-app-container:hover {
+      background-color: #555;
+      border-color: #ff8200;
+    }
+    body.custom-mode .app-text {
+      color: #ffcc33;
+    }
+    body.custom-mode .zoom-button {
+      background-color: #444;
+      border: 1px solid #555;
+      color: #ffcc33;
+    }
+    body.custom-mode .zoom-button:hover {
+      background-color: #555;
+      border-color: #ffcc33;
+    }
+    
+    /* (ADDED) 11. Night Mode Overrides - Dark Marine Blue with Light Grey/White Accents */
+    body.night-mode {
+      background-color: #1a2c3b;
+      color: #f0f0f0;
+    }
+    body.night-mode #pan-container {
+      background-image:
+        linear-gradient(0deg, rgba(245,245,245,0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,245,245,0.2) 1px, transparent 1px);
+    }
+    body.night-mode .nav {
+      background-color: #22394b;
+      border-bottom: 1.5px solid #cfcfcf;
+    }
+    body.night-mode .app-box {
+      background-color: #22394b;
+      color: #f0f0f0;
+      border: 1px solid #2f4d63;
+    }
+    body.night-mode .app-box:hover {
+      border-color: #cfcfcf;
+    }
+    body.night-mode .desktop-app-container {
+      background-color: #22394b;
+      border: 1px solid #2f4d63;
+      border-bottom: 1.5px solid #cfcfcf;
+    }
+    body.night-mode .desktop-app-container:hover {
+      background-color: #2f4d63;
+      border-color: #cfcfcf;
+    }
+    body.night-mode .app-text {
+      color: #f0f0f0;
+    }
+    body.night-mode .zoom-button {
+      background-color: #22394b;
+      border: 1px solid #2f4d63;
+      color: #f0f0f0;
+    }
+    body.night-mode .zoom-button:hover {
+      background-color: #2f4d63;
+      border-color: #cfcfcf;
+    }
+    /* (ADDED) Night Mode: Timeline Container & Window Controls */
+    body.night-mode .timeline-container {
+      background-color: #22394b;
+      border: 1px solid #cfcfcf;
+    }
+    body.night-mode .window-controls {
+      background-color: #22394b;
+      border-bottom: 1px solid #cfcfcf;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      /* ----- Navigation Dropdown Handling ----- */
+      const navAppBoxes = document.querySelectorAll(".nav .app-box.has-sub-apps");
+      navAppBoxes.forEach(box => {
+        box.addEventListener("mouseenter", () => {
+          navAppBoxes.forEach(otherBox => {
+            if (otherBox !== box) otherBox.classList.remove("expanded");
+          });
+          box.classList.add("expanded");
         });
-    </script>
+        box.addEventListener("mouseleave", e => {
+          if (!box.contains(e.relatedTarget)) {
+            box.classList.remove("expanded");
+          }
+        });
+        const subMenu = box.querySelector('.sub-app-box-container');
+        if(subMenu){
+          subMenu.addEventListener("mouseleave", e => {
+            if (!subMenu.contains(e.relatedTarget)) {
+              box.classList.remove("expanded");
+            }
+          });
+        }
+      });
+      
+      /* ----- Dynamic Headers Setup ----- */
+      const headers = {
+        header1: { 
+          element: document.getElementById("header1"), 
+          images: Array.from({ length: 14 }, (_, i) => `bg${i+1}.png`) 
+        },
+        header2: { 
+          element: document.getElementById("header2"), 
+          images: Array.from({ length: 14 }, (_, i) => `bg${i+15}.png`) 
+        },
+        header3: { 
+          element: document.getElementById("header3"), 
+          images: Array.from({ length: 14 }, (_, i) => `bg${i+29}.png`) 
+        },
+        header4: { 
+          element: document.getElementById("header4"), 
+          images: Array.from({ length: 14 }, (_, i) => `bg${i+43}.png`) 
+        }
+      };
+      const cycleTime = 5000;
+      
+      Object.entries(headers).forEach(([key, header]) => {
+        let index = 0;
+        const progress = document.getElementById(`progress${key.slice(-1)}`);
+        
+        function updateHeader() {
+          header.element.style.backgroundImage = `url('images/${header.images[index]}')`;
+          index = (index + 1) % header.images.length;
+          if (progress) {
+            progress.style.width = "0%";
+            animateProgress(progress);
+          }
+        }
+        
+        function animateProgress(progressElem) {
+          let startTimestamp = null;
+          function step(timestamp) {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const elapsed = timestamp - startTimestamp;
+            const fraction = Math.min(elapsed / cycleTime, 1);
+            progressElem.style.width = `${fraction * 100}%`;
+            if (fraction < 1) {
+              window.requestAnimationFrame(step);
+            }
+          }
+          window.requestAnimationFrame(step);
+        }
+        
+        updateHeader();
+        if (progress) animateProgress(progress);
+        setInterval(updateHeader, cycleTime);
+      });
+      
+      /* ----- Timeline Link Debugging ----- */
+      document.querySelectorAll('.timeline-link').forEach(link => {
+        link.addEventListener('click', event => {
+          console.log('Clicked:', event.currentTarget.href);
+        });
+      });
+      
+      /* ----- Pan/Zoom and Drag Setup (basic implementation) ----- */
+      let isPanning = false;
+      let panStartX = 0, panStartY = 0;
+      let currentPanX = -2500, currentPanY = -2500;
+      let currentScale = 1;
+      const panContainer = document.getElementById('pan-container');
+      function updateTransform() {
+        panContainer.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
+      }
+      updateTransform();
+      panContainer.addEventListener('mousedown', e => {
+        if (e.target === panContainer) {
+          isPanning = true;
+          panStartX = e.clientX - currentPanX;
+          panStartY = e.clientY - currentPanY;
+          panContainer.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('mousemove', e => {
+        if (isPanning) {
+          currentPanX = e.clientX - panStartX;
+          currentPanY = e.clientY - panStartY;
+          updateTransform();
+        }
+      });
+      document.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          panContainer.style.cursor = 'grab';
+        }
+      });
+      
+      /* ----- Enable Dragging for Selected Elements ----- */
+      const draggableSelectors = [
+        ".nav",
+        ".desktop-app-container",
+        ".timeline-card",
+        ".timeline-container"
+      ];
+      draggableSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          enableDrag(el);
+        });
+      });
+      
+      /* ----- Double-Click Navigation for Elements with data-target ----- */
+      document.querySelectorAll('[data-target]').forEach(el => {
+        el.addEventListener('dblclick', function(e) {
+          e.stopPropagation();
+          const targetURL = el.getAttribute('data-target');
+          if (targetURL) {
+            window.location.href = targetURL;
+          }
+        });
+      });
+
+      /* (ADDED) Triple Mode Toggle Button: Day (default), Custom, Night */
+      const modes = ["day-mode", "custom-mode", "night-mode"];
+      let modeIndex = 0; // Default is day-mode (index 0)
+      const modeNames = { "day-mode": "Day Mode", "custom-mode": "Custom Mode", "night-mode": "Night Mode" };
+      
+      // Ensure default body class is day-mode
+      document.body.classList.add(modes[modeIndex]);
+      
+      const dayNightButton = document.createElement('div');
+      dayNightButton.id = 'toggle-day-night';
+      // Label button with next mode's name
+      dayNightButton.textContent = modeNames[modes[(modeIndex + 1) % modes.length]];
+      dayNightButton.style.position = 'fixed';
+      dayNightButton.style.bottom = '20px';
+      dayNightButton.style.right = '20px';
+      dayNightButton.style.backgroundColor = '#333';
+      dayNightButton.style.color = '#fff';
+      dayNightButton.style.border = '1px solid #666';
+      dayNightButton.style.padding = '0 10px';
+      dayNightButton.style.height = '43px';
+      dayNightButton.style.display = 'flex';
+      dayNightButton.style.alignItems = 'center';
+      dayNightButton.style.justifyContent = 'center';
+      dayNightButton.style.cursor = 'pointer';
+      dayNightButton.style.zIndex = '9999';
+      document.body.appendChild(dayNightButton);
+
+      dayNightButton.addEventListener('click', () => {
+        // Remove current mode class
+        document.body.classList.remove(modes[modeIndex]);
+        // Cycle to next mode
+        modeIndex = (modeIndex + 1) % modes.length;
+        document.body.classList.add(modes[modeIndex]);
+        // Update button label to next mode in sequence
+        const nextIndex = (modeIndex + 1) % modes.length;
+        dayNightButton.textContent = modeNames[modes[nextIndex]];
+      });
+    });
+    
+    /* ----- Zoom Open Animation (if used) ----- */
+    function zoomOpenStages(event, targetURL, iconSrc) {
+      event.stopPropagation();
+      const icon = event.currentTarget;
+      const rect = icon.getBoundingClientRect();
+      const clone = document.createElement('div');
+      clone.classList.add('icon-clone');
+      clone.style.top = rect.top + 'px';
+      clone.style.left = rect.left + 'px';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      clone.style.backgroundImage = `url(${iconSrc})`;
+      clone.style.backgroundSize = 'contain';
+      clone.style.backgroundPosition = 'center';
+      clone.style.backgroundRepeat = 'no-repeat';
+      clone.style.backgroundColor = window.getComputedStyle(icon).backgroundColor;
+      document.body.appendChild(clone);
+      clone.style.animation = 'zoomOpen 0.35s linear forwards';
+      clone.addEventListener('animationend', () => {
+        window.location.href = targetURL;
+      }, { once: true });
+    }
+    
+    /* ----- Drag & Snap Functionality ----- */
+    function enableDrag(el) {
+      let pos = { startX: 0, startY: 0, initialLeft: 0, initialTop: 0 };
+      let isDragging = false;
+      el.addEventListener('mousedown', dragStart);
+      
+      function dragStart(e) {
+        if (e.button !== 0) return;
+        pos.startX = e.clientX;
+        pos.startY = e.clientY;
+        pos.initialLeft = parseInt(window.getComputedStyle(el).left, 10) || 0;
+        pos.initialTop = parseInt(window.getComputedStyle(el).top, 10) || 0;
+        isDragging = false;
+        document.addEventListener('mousemove', dragging);
+        document.addEventListener('mouseup', dragEnd);
+      }
+      
+      function dragging(e) {
+        const dx = e.clientX - pos.startX;
+        const dy = e.clientY - pos.startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          isDragging = true;
+        }
+        el.style.left = (pos.initialLeft + dx) + 'px';
+        el.style.top = (pos.initialTop + dy) + 'px';
+      }
+      
+      function dragEnd(e) {
+        document.removeEventListener('mousemove', dragging);
+        document.removeEventListener('mouseup', dragEnd);
+        if (isDragging) {
+          const gridSize = 30;
+          const width = el.offsetWidth;
+          const height = el.offsetHeight;
+          const currentLeft = parseInt(el.style.left, 10);
+          const currentTop = parseInt(el.style.top, 10);
+          const centerX = currentLeft + width / 2;
+          const centerY = currentTop + height / 2;
+          const snappedCenterX = Math.round(centerX / gridSize) * gridSize;
+          const snappedCenterY = Math.round(centerY / gridSize) * gridSize;
+          const newLeft = snappedCenterX - width / 2;
+          const newTop = snappedCenterY - height / 2;
+          el.style.left = newLeft + 'px';
+          el.style.top = newTop + 'px';
+        }
+      }
+    }
+  </script>
 </head>
 <body>
-    <div class="nav">
-        <div class="app-box" onclick="location.href='about.html'">About</div>
-        <div class="app-box" onclick="location.href='index4.html'">Work</div>
-        <div class="app-box" onclick="location.href='resume.html'">Resume Timeline</div>
+  <!-- ===================================================== -->
+  <!-- Navigation Bar (Replaced with code from desktop.html) -->
+  <!-- ===================================================== -->
+  <div class="nav" data-target="" data-img="">
+    <!-- IMAGIN.Studio - Work with Dropdown -->
+    <div class="app-box nav-desktop-app has-sub-apps" data-target="imagin_app.html" data-img="images/imaginstudio_app.png">
+      <div class="desktop-app">
+        <img src="images/imaginstudio_app.png" alt="IMAGIN Studio App">
+      </div>
+      <div class="app-text">IMAGIN.Studio - Work</div>
+      <div class="sub-app-box-container">
+        <div class="sub-app-box" data-scene="autumn">IMAGIN.Studio - Autumn Scene</div>
+        <div class="sub-app-box" data-scene="iceland">IMAGIN.Studio - Iceland Scene</div>
+        <div class="sub-app-box" data-scene="suburb">IMAGIN.Studio - Suburb Scene</div>
+        <div class="sub-app-box" data-scene="beach">IMAGIN.Studio - Beach Scene</div>
+      </div>
     </div>
-    <div class="window">
-        <div class="window-header">
-            <span>Ziggy's Portfolio</span>
-            <div class="buttons">
-                <button class="minimize">-</button>
-                <button class="maximize">□</button>
-                <button class="close">x</button>
-            </div>
+
+    <!-- Medal.TV - Work with Dropdown -->
+    <div class="app-box nav-desktop-app has-sub-apps" data-target="medaltv_app.html" data-img="images/medaltv_app.png">
+      <div class="desktop-app">
+        <img src="images/medaltv_app.png" alt="Medal.TV App">
+      </div>
+      <div class="app-text">Medal.TV - Work</div>
+      <div class="sub-app-box-container">
+        <div class="sub-app-box" data-scene="wrecked-art">Get Wrecked - Art</div>
+        <div class="sub-app-box" data-scene="wrecked-qa">Get Wrecked - QA &amp; Community</div>
+      </div>
+    </div>
+
+    <!-- Resume (No dropdown) -->
+    <div class="app-box nav-desktop-app" data-target="timeline.html" data-img="images/resume_app.png">
+      <div class="desktop-app">
+        <img src="images/resume_app.png" alt="Resume App">
+      </div>
+      <div class="app-text">Resume</div>
+    </div>
+  </div>
+  
+  <!-- ===================================================== -->
+  <!-- Pan Container (Infinite Grid) -->
+  <!-- ===================================================== -->
+  <div id="pan-container">
+    <!-- Desktop Area (optional) -->
+    <div class="desktop">
+      <div class="desktop-app-container" style="left: -170px; top: 0;" data-target="imagin_app.html" data-img="images/imaginstudio_app.png">
+        <div class="desktop-app">
+          <img src="images/imaginstudio_app.png" alt="IMAGIN Studio App">
         </div>
-        <div class="header"></div>
+        <div class="app-text">IMAGIN.Studio - Work</div>
+      </div>
+      <div class="desktop-app-container" style="left: -50px; top: 0;" data-target="medaltv_app.html" data-img="images/medaltv_app.png">
+        <div class="desktop-app">
+          <img src="images/medaltv_app.png" alt="Medal.TV App">
+        </div>
+        <div class="app-text">Medal.TV - Work</div>
+      </div>
+      <div class="desktop-app-container" style="left: 70px; top: 0;" data-target="timeline.html" data-img="images/resume_app.png">
+        <div class="desktop-app">
+          <img src="images/resume_app.png" alt="Resume App">
+        </div>
+        <div class="app-text">Resume</div>
+      </div>
     </div>
+    
+    <!-- ===================================================== -->
+    <!-- Timeline Section with Dynamic Header Cards -->
+    <!-- ===================================================== -->
+    <div class="timeline-container">
+      <div class="window-controls">
+        <!-- Added App Icon and Name on the left -->
+        <div style="margin-right:auto; display:flex; align-items:center;">
+          <img src="images/imaginstudio_app.png" style="width:20px; height:20px; margin-right:5px;" alt="IMAGIN.Studio">
+          <span style="font-size:14px;">IMAGIN.Studio</span>
+        </div>
+        <div class="control-btn" onclick="minimizeTimeline()">−</div>
+        <div class="control-btn" onclick="window.location.href='desktop.html'">×</div>
+      </div>
+      <div class="timeline">
+        <!-- Dynamic Header Card 1 -->
+        <a href="page1.html" class="timeline-link">
+          <div class="timeline-card header-card">
+            <div id="header1" class="header"></div>
+            <div class="progress-loader">
+              <div class="progress" id="progress1"></div>
+            </div>
+          </div>
+        </a>
+        <!-- Dynamic Header Card 2 -->
+        <a href="page2.html" class="timeline-link">
+          <div class="timeline-card header-card">
+            <div id="header2" class="header"></div>
+            <div class="progress-loader">
+              <div class="progress" id="progress2"></div>
+            </div>
+          </div>
+        </a>
+        <!-- Dynamic Header Card 3 -->
+        <a href="page3.html" class="timeline-link">
+          <div class="timeline-card header-card">
+            <div id="header3" class="header"></div>
+            <div class="progress-loader">
+              <div class="progress" id="progress3"></div>
+            </div>
+          </div>
+        </a>
+        <!-- Dynamic Header Card 4 -->
+        <a href="page4.html" class="timeline-link">
+          <div class="timeline-card header-card">
+            <div id="header4" class="header"></div>
+            <div class="progress-loader">
+              <div class="progress" id="progress4"></div>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+
+  <!-- ===================================================== -->
+  <!-- Zoom Controls -->
+  <!-- ===================================================== -->
+  <div class="zoom-controls">
+    <div class="zoom-button" id="zoom-out">–</div>
+    <div class="zoom-button" id="zoom-in">+</div>
+  </div>
 </body>
 </html>
